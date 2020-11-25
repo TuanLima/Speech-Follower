@@ -4,22 +4,21 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.PermissionChecker;
 
 import edu.cmu.pocketsphinx.Assets;
+import edu.cmu.pocketsphinx.Hypothesis;
 import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
 import edu.cmu.pocketsphinx.SpeechRecognizer;
+import edu.cmu.pocketsphinx.RecognitionListener;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.speech.RecognitionListener;
-
-
 
 import java.io.File;
 import java.io.IOException;
-
+import android.widget.TextView;
+import android.widget.Toast;
 
 public class SpeechFollower extends AppCompatActivity implements RecognitionListener {
 
@@ -60,9 +59,12 @@ public class SpeechFollower extends AppCompatActivity implements RecognitionList
                     File assetDir = assets.syncAssets();
                     setupRecognizer(assetDir);
                 } catch (IOException e) {
-                    System.out.println("IOException thrown");
+                    System.err.println("IOException thrown");
                     e.printStackTrace();
+                    finish();
                 }
+
+
             }
         }).start();
     }
@@ -77,7 +79,7 @@ public class SpeechFollower extends AppCompatActivity implements RecognitionList
         } catch (IOException e) {
             throw new IOException("Problem getting Recognizer", e);
         }
-        recognizer.addListener((edu.cmu.pocketsphinx.RecognitionListener) this);
+        recognizer.addListener(this);
         recognizer.addKeyphraseSearch(INIT_SEARCH, KEYPHRASE);
         recognizer.addGrammarSearch(SENTENCE_1_SEARCH, jsgfString1);
         recognizer.addGrammarSearch(SENTENCE_2_SEARCH, jsgfString1);
@@ -96,22 +98,7 @@ public class SpeechFollower extends AppCompatActivity implements RecognitionList
     }
 
     @Override
-    public void onReadyForSpeech(Bundle params) {
-
-    }
-
-    @Override
     public void onBeginningOfSpeech() {
-
-    }
-
-    @Override
-    public void onRmsChanged(float rmsdB) {
-
-    }
-
-    @Override
-    public void onBufferReceived(byte[] buffer) {
 
     }
 
@@ -121,22 +108,34 @@ public class SpeechFollower extends AppCompatActivity implements RecognitionList
     }
 
     @Override
-    public void onError(int error) {
+    public void onPartialResult(Hypothesis hypothesis) {
 
     }
 
     @Override
-    public void onResults(Bundle results) {
+    public void onResult(Hypothesis hypothesis) {
+        ((TextView) findViewById(R.id.result_text)).setText("");
+        if (hypothesis != null){
+            String text = hypothesis.getHypstr();
+            if(text.equals(KEYPHRASE)){
+                System.out.println("Keyphrase pronounced");
+                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
+            }
+            else {
+                System.out.println("Keyphrase not pronounced");
+                Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
+            }
+        }
 
     }
 
     @Override
-    public void onPartialResults(Bundle partialResults) {
+    public void onError(Exception e) {
 
     }
 
     @Override
-    public void onEvent(int eventType, Bundle params) {
+    public void onTimeout() {
 
     }
 }
